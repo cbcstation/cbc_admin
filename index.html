@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CBC Station - Admin Login</title>
+<style>
+  body {
+    margin:0;
+    font-family: Arial, sans-serif;
+    background: linear-gradient(to right, #1c1c1c, #2c2c2c);
+    color: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+  }
+  .login-container {
+    background: #222;
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    width: 320px;
+    text-align: center;
+  }
+  .login-container h1 {
+    margin-bottom: 20px;
+    font-size: 24px;
+    color: #ff3b3b;
+  }
+  .login-container input {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    border: none;
+    border-radius: 8px;
+    outline: none;
+    font-size: 16px;
+  }
+  .login-container button {
+    width: 100%;
+    padding: 12px;
+    margin-top: 15px;
+    border: none;
+    border-radius: 8px;
+    background-color: #ff3b3b;
+    color: #fff;
+    font-size: 16px;
+    cursor: pointer;
+    transition: 0.3s;
+  }
+  .login-container button:hover {
+    background-color: #e32b2b;
+  }
+  .error {
+    color: #ff6666;
+    margin-top: 10px;
+    font-size: 14px;
+  }
+</style>
+</head>
+<body>
+
+<div class="login-container">
+  <h1>Admin CBC</h1>
+  <input type="email" id="email" placeholder="Email admin" required>
+  <input type="password" id="secretCode" placeholder="Code secret" required>
+  <button id="loginBtn">Se connecter</button>
+  <div class="error" id="errorMsg"></div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
+  import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+  import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-analytics.js";
+
+  // 🔹 Firebase Config
+  const firebaseConfig = {
+    apiKey: "AIzaSyBla3D7OS8-Hx82m8Tz6ZPIS7FSLury3ew",
+    authDomain: "cbc-business.firebaseapp.com",
+    projectId: "cbc-business",
+    storageBucket: "cbc-business.firebasestorage.app",
+    messagingSenderId: "295952883135",
+    appId: "1:295952883135:web:4624174a452c1f6aad950a",
+    measurementId: "G-580W4D6J7E"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+  const db = getFirestore(app);
+  const auth = getAuth(app);
+
+  const loginBtn = document.getElementById("loginBtn");
+  const errorMsg = document.getElementById("errorMsg");
+
+  // 🔹 Triple vérif admin
+  async function verifyAdmin(email, secretCode) {
+    try {
+      // 1️⃣ Vérifier dans users
+      const usersCol = collection(db, "users");
+      const q1 = query(usersCol, where("email", "==", email), where("role", "==", "admin"), where("active", "==", true));
+      const userSnap = await getDocs(q1);
+      if (userSnap.empty) return false;
+      const userData = userSnap.docs[0].data();
+      const userID = userData.userID;
+
+      // 2️⃣ Vérifier dans admins
+      const adminsCol = collection(db, "admins");
+      const q2 = query(adminsCol, where("userID", "==", userID));
+      const adminSnap = await getDocs(q2);
+      if (adminSnap.empty) return false;
+      const adminData = adminSnap.docs[0].data();
+
+      if (!["adminA","adminB","master"].includes(adminData.role)) return false;
+
+      // 3️⃣ Vérifier secretCode
+      if (adminData.secretCode !== secretCode) return false;
+
+      return { userID, name: userData.name, role: adminData.role };
+    } catch(err) {
+      console.error("Erreur vérif admin:", err);
+      return false;
+    }
+  }
+
+  loginBtn.addEventListener("click", async () => {
+    const email = document.getElementById("email").value.trim();
+    const secretCode = document.getElementById("secretCode").value.trim();
+    errorMsg.textContent = "";
+
+    if (!email || !secretCode) {
+      errorMsg.textContent = "Veuillez remplir tous les champs.";
+      return;
+    }
+
+    // 🔹 Auth Firebase (optionnel)
+    try {
+      await signInWithEmailAndPassword(auth, email, secretCode);
+    } catch(err) {
+      console.warn("Firebase Auth échoué (mais Firestore triple vérif toujours ok)", err.message);
+    }
+
+    const verified = await verifyAdmin(email, secretCode);
+    if (!verified) {
+      errorMsg.textContent = "Email, code ou droits admin incorrects.";
+      return;
+    }
+
+    // 🔹 Stocker info pour session admin
+    sessionStorage.setItem("adminInfo", JSON.stringify(verified));
+
+    // 🔹 Redirection vers admin.html
+    window.location.href = "admin.html";
+  });
+
+</script>
+
+</body>
+</html>

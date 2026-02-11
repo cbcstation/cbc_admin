@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>CBC Business – Support Admin</title>
+
+<style>
+  * {
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+  }
+
+  body {
+    margin: 0;
+    background: #0f1115;
+    color: #eaeaea;
+  }
+
+  header {
+    padding: 16px 24px;
+    background: #151922;
+    border-bottom: 1px solid #232838;
+  }
+
+  header h1 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+  }
+
+  .container {
+    max-width: 1100px;
+    margin: 24px auto;
+    padding: 0 16px;
+  }
+
+  .ticket-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .ticket {
+    background: #161b26;
+    border: 1px solid #232838;
+    border-radius: 8px;
+    padding: 14px 16px;
+    cursor: pointer;
+    transition: background 0.2s, border 0.2s;
+  }
+
+  .ticket:hover {
+    background: #1b2130;
+    border-color: #3b82f6;
+  }
+
+  .ticket.abuse {
+    border-left: 4px solid #ef4444;
+    background: #1a1416;
+  }
+
+  .ticket-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .subject {
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  .badge {
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+
+  .badge.abuse {
+    background: #ef4444;
+    color: #fff;
+  }
+
+  .badge.normal {
+    background: #374151;
+    color: #d1d5db;
+  }
+
+  .meta {
+    margin-top: 8px;
+    font-size: 13px;
+    color: #9ca3af;
+    display: flex;
+    gap: 16px;
+  }
+
+  .status {
+    text-transform: capitalize;
+  }
+
+  .empty {
+    text-align: center;
+    padding: 40px;
+    color: #9ca3af;
+  }
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>🎫 Support – Tickets utilisateurs</h1>
+  <a href="dashboard.html">Tableau de bord</a>
+</header>
+
+<div class="container">
+
+  <!-- LISTE DES TICKETS -->
+  <div class="ticket-list">
+
+    <!-- TICKET ABUSE -->
+    <div class="ticket abuse" onclick="location.href='supporter.html?ticket=TICKET_ID'">
+      <div class="ticket-header">
+        <div class="subject">Annonce frauduleuse signalée</div>
+        <div class="badge abuse">ABUSE</div>
+      </div>
+      <div class="meta">
+        <span>UserID: uid_123456</span>
+        <span class="status">open</span>
+        <span>—</span>
+      </div>
+    </div>
+
+    <!-- TICKET NORMAL -->
+    <div class="ticket" onclick="location.href='supporter.html?ticket=TICKET_ID_2'">
+      <div class="ticket-header">
+        <div class="subject">Problème de paiement</div>
+        <div class="badge normal">NORMAL</div>
+      </div>
+      <div class="meta">
+        <span>UserID: uid_987654</span>
+        <span class="status">in_progress</span>
+        <span>—</span>
+      </div>
+    </div>
+
+    <!-- SI VIDE -->
+    <!--
+    <div class="empty">
+      Aucun ticket pour le moment
+    </div>
+    -->
+
+  </div>
+
+</div>
+<script type="module">
+/* ================================
+   FIREBASE IMPORTS
+================================ */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js";
+import {
+  getFirestore,
+  collection,
+  getDocs,
+  doc,
+  getDoc,
+  query,
+  orderBy
+} from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+
+/* ================================
+   CONFIG
+================================ */
+const firebaseConfig = {
+  apiKey: "AIzaSyBla3D7OS8-Hx82m8Tz6ZPIS7FSLury3ew",
+  authDomain: "cbc-business.firebaseapp.com",
+  projectId: "cbc-business",
+  storageBucket: "cbc-business.firebasestorage.app",
+  messagingSenderId: "295952883135",
+  appId: "1:295952883135:web:4624174a452c1f6aad950a",
+  measurementId: "G-580W4D6J7E"
+};
+
+/* ================================
+   INIT
+================================ */
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+/* ================================
+   UI
+================================ */
+const listContainer = document.querySelector(".ticket-list");
+
+/* ================================
+   SECURITY CHECK (DOUBLE)
+================================ */
+async function checkAdminAccess(user) {
+  const userRef = doc(db, "users", user.uid);
+  const adminRef = doc(db, "admins", user.uid);
+
+  const [userSnap, adminSnap] = await Promise.all([
+    getDoc(userRef),
+    getDoc(adminRef)
+  ]);
+
+  if (!userSnap.exists()) return false;
+  if (!adminSnap.exists()) return false;
+
+  if (userSnap.data().role !== "admin") return false;
+  if (!adminSnap.data().role) return false;
+
+  return true;
+}
+
+/* ================================
+   LOAD TICKETS
+================================ */
+async function loadTickets() {
+  listContainer.innerHTML = "";
+
+  const q = query(
+    collection(db, "support"),
+    orderBy("timestamp", "desc")
+  );
+
+  const snap = await getDocs(q);
+
+  if (snap.empty) {
+    listContainer.innerHTML = `
+      <div class="empty">Aucun ticket support</div>
+    `;
+    return;
+  }
+
+  const tickets = [];
+
+  snap.forEach(docSnap => {
+    tickets.push({
+      id: docSnap.id,
+      ...docSnap.data()
+    });
+  });
+
+  // 🔥 Priorité aux abuseReports
+  tickets.sort((a, b) => {
+    return (b.abuseReports === true) - (a.abuseReports === true);
+  });
+
+  tickets.forEach(ticket => {
+    const div = document.createElement("div");
+    div.className = `ticket ${ticket.abuseReports ? "abuse" : ""}`;
+
+    div.innerHTML = `
+      <div class="ticket-header">
+        <div class="subject">${ticket.subject || "Sans objet"}</div>
+        <div class="badge ${ticket.abuseReports ? "abuse" : "normal"}">
+          ${ticket.abuseReports ? "ABUSE" : "NORMAL"}
+        </div>
+      </div>
+      <div class="meta">
+        <span>UserID: ${ticket.userID}</span>
+        <span class="status">${ticket.status}</span>
+        <span>—</span>
+      </div>
+    `;
+
+    div.addEventListener("click", () => {
+      window.location.href =
+        `supporter.html?ticket=${ticket.id}&owner=${ticket.userID}`;
+    });
+
+    listContainer.appendChild(div);
+  });
+}
+
+/* ================================
+   AUTH LISTENER
+================================ */
+onAuthStateChanged(auth, async (user) => {
+  if (!user) {
+    location.href = "/login.html";
+    return;
+  }
+
+  const allowed = await checkAdminAccess(user);
+
+  if (!allowed) {
+    alert("⛔ Accès refusé");
+    location.href = "/";
+    return;
+  }
+
+  loadTickets();
+});
+</script>
+</body>
+</html>

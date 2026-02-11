@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Recherche Utilisateur – CBC Admin</title>
+<style>
+  :root {
+  --bg: #0f172a;
+  --panel: #111827;
+  --card: #1f2933;
+  --text: #e5e7eb;
+  --muted: #9ca3af;
+  --accent: #22c55e;
+  --danger: #ef4444;
+  --warning: #f59e0b;
+  --border: #374151;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+}
+
+header {
+  background: var(--panel);
+  color: var(--text);
+  padding: 1rem;
+  text-align: center;
+}
+
+main {
+  max-width: 900px;
+  margin: 2rem auto;
+  padding: 1.5rem;
+  background: var(--panel);
+  border-radius: 10px;
+  border: 1px solid var(--border);
+}
+
+h1 {
+  margin-top: 0;
+  font-size: 1.5rem;
+  text-align: center;
+}
+
+.search-section {
+  margin-bottom: 2rem;
+}
+
+label {
+  display: block;
+  font-weight: bold;
+  margin: 0.5rem 0 0.2rem 0;
+  color: var(--muted);
+}
+
+input {
+  width: 100%;
+  padding: 0.6rem;
+  margin-bottom: 0.6rem;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: #020617;
+  color: var(--text);
+}
+
+button {
+  padding: 0.6rem 1.2rem;
+  border: none;
+  border-radius: 6px;
+  background: var(--accent);
+  color: #000;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+button:hover {
+  background: #16a34a;
+}
+
+.results {
+  margin-top: 1rem;
+}
+
+.result-item {
+  padding: 0.8rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--card);
+  border-radius: 6px;
+  margin-bottom: 0.5rem;
+}
+
+.result-item span {
+  font-weight: bold;
+  color: var(--text);
+}
+
+.result-actions button {
+  margin-left: 0.5rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  color: #fff;
+  background: var(--accent);
+}
+
+.result-actions button.delete {
+  background: var(--danger);
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Recherche Utilisateur / Annonce – Admin CBC</h1>
+</header>
+
+<main>
+  <section class="search-section">
+    <h2>Recherche par Nom</h2>
+    <label for="searchName">Nom de l'utilisateur</label>
+    <input type="text" id="searchName" placeholder="Ex: Jean Dupont">
+    <button id="btnSearchName">Chercher</button>
+  </section>
+
+  <section class="search-section">
+    <h2>Recherche par AnnonceID</h2>
+    <label for="searchAnnonce">AnnonceID</label>
+    <input type="text" id="searchAnnonce" placeholder="Ex: annonce_12345">
+    <button id="btnSearchAnnonce">Chercher</button>
+  </section>
+
+  <section class="results">
+    <h2>Résultats</h2>
+    <div id="resultsContainer">
+      <!-- Les résultats dynamiques apparaîtront ici -->
+    </div>
+  </section>
+</main>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js";
+import {
+  getFirestore,
+  collection,
+  getDocs,
+  doc,
+  getDoc,
+  query,
+  where
+} from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+
+/* ================================
+   FIREBASE CONFIG
+=============================== */
+const firebaseConfig = {
+  apiKey: "AIzaSyBla3D7OS8-Hx82m8Tz6ZPIS7FSLury3ew",
+  authDomain: "cbc-business.firebaseapp.com",
+  projectId: "cbc-business",
+  storageBucket: "cbc-business.firebasestorage.app",
+  messagingSenderId: "295952883135",
+  appId: "1:295952883135:web:4624174a452c1f6aad950a",
+  measurementId: "G-580W4D6J7E"
+};
+
+/* ================================
+   INIT
+=============================== */
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+/* ================================
+   ELEMENTS UI
+=============================== */
+const btnSearchName = document.getElementById("btnSearchName");
+const btnSearchAnnonce = document.getElementById("btnSearchAnnonce");
+const inputName = document.getElementById("searchName");
+const inputAnnonce = document.getElementById("searchAnnonce");
+const resultsContainer = document.getElementById("resultsContainer");
+
+/* ================================
+   SECURITY CHECK
+=============================== */
+async function checkAdminAccess(user) {
+  const userRef = doc(db, "users", user.uid);
+  const adminRef = doc(db, "admins", user.uid);
+
+  const [userSnap, adminSnap] = await Promise.all([
+    getDoc(userRef),
+    getDoc(adminRef)
+  ]);
+
+  if (!userSnap.exists() || !adminSnap.exists()) return false;
+
+  const uRole = userSnap.data().role;
+  const aRole = adminSnap.data().role;
+
+  return uRole === "admin" && (aRole === "master" || aRole === "adminA");
+}
+
+/* ================================
+   AFFICHAGE RESULTATS
+=============================== */
+function showResults(users) {
+  resultsContainer.innerHTML = "";
+  if (!users.length) {
+    resultsContainer.innerHTML = "<div>Aucun résultat trouvé</div>";
+    return;
+  }
+
+  users.forEach(u => {
+    const div = document.createElement("div");
+    div.className = "result-item";
+    div.innerHTML = `
+      <span>${u.name || "—"} (UserID: <strong>${u.id}</strong>)</span>
+      <div class="result-actions">
+        <button class="btn-copy">Copier ID</button>
+        <button class="btn-support">Voir Support</button>
+      </div>
+    `;
+    resultsContainer.appendChild(div);
+
+    // Copie UserID
+    div.querySelector(".btn-copy").addEventListener("click", () => {
+      navigator.clipboard.writeText(u.id);
+      alert("UserID copié !");
+    });
+
+    // Redirection vers supporter.html avec le vrai userID
+    div.querySelector(".btn-support").addEventListener("click", () => {
+      window.location.href = `supporter.html?ticket=&owner=${u.id}`;
+    });
+  });
+}
+
+/* ================================
+   RECHERCHE PAR NOM
+=============================== */
+async function searchByName(name) {
+  if (!name) return showResults([]);
+
+  const q = query(collection(db, "users"), where("name", "==", name));
+  const snap = await getDocs(q);
+
+  const users = [];
+  snap.forEach(docSnap => {
+    users.push({ id: docSnap.id, ...docSnap.data() });
+  });
+
+  showResults(users);
+}
+
+/* ================================
+   RECHERCHE PAR ANNONCEID
+=============================== */
+async function searchByAnnonceID(annonceID) {
+  if (!annonceID) return showResults([]);
+
+  const annonceRef = doc(db, "annonces", annonceID);
+  const annonceSnap = await getDoc(annonceRef);
+
+  if (!annonceSnap.exists()) return showResults([]);
+
+  const annonceData = annonceSnap.data();
+  const userID = annonceData.userID;
+
+  if (!userID) return showResults([]);
+
+  const userRef = doc(db, "users", userID);
+  const userSnap = await getDoc(userRef);
+
+  if (!userSnap.exists()) return showResults([]);
+
+  showResults([{ id: userSnap.id, ...userSnap.data() }]);
+}
+
+/* ================================
+   EVENT LISTENERS
+=============================== */
+btnSearchName.addEventListener("click", () => {
+  searchByName(inputName.value.trim());
+});
+
+btnSearchAnnonce.addEventListener("click", () => {
+  searchByAnnonceID(inputAnnonce.value.trim());
+});
+
+/* ================================
+   AUTH LISTENER
+=============================== */
+onAuthStateChanged(auth, async (user) => {
+  if (!user) {
+    location.href = "/login.html";
+    return;
+  }
+
+  const allowed = await checkAdminAccess(user);
+  if (!allowed) {
+    alert("⛔ Accès refusé");
+    location.href = "/";
+    return;
+  }
+});
+</script>
+</body>
+</html>

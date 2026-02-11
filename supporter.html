@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Support Ticket</title>
+<style>
+:root {
+  --bg: #0f172a;
+  --panel: #111827;
+  --card: #1f2933;
+  --text: #e5e7eb;
+  --muted: #9ca3af;
+  --accent: #22c55e;
+  --danger: #ef4444;
+  --warning: #f59e0b;
+  --border: #374151;
+}
+
+/* Reset */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* ================= HEADER ================= */
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+}
+
+header h1 {
+  font-size: 1.4rem;
+}
+
+.badge {
+  padding: 0.25rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: bold;
+}
+
+.badge.abuse {
+  background: var(--danger);
+  color: #fff;
+}
+
+.badge.normal {
+  background: var(--accent);
+  color: #000;
+}
+
+/* ================= MAIN ================= */
+main {
+  max-width: 900px;
+  margin: 1.5rem auto;
+  padding: 1rem;
+  display: grid;
+  gap: 2rem;
+}
+
+.section {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1rem 1.5rem;
+}
+
+.section h2 {
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+  border-left: 4px solid var(--accent);
+  padding-left: 0.6rem;
+}
+
+/* ================= TICKET INFO ================= */
+.ticket-info {
+  display: grid;
+  gap: 0.6rem;
+  font-size: 0.9rem;
+}
+
+.ticket-info span {
+  font-weight: bold;
+}
+
+/* ================= CONVERSATION ================= */
+#conversationContainer {
+  max-height: 420px;
+  overflow-y: auto;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card);
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+/* Message commun */
+.message {
+  max-width: 70%;
+  padding: 0.6rem 0.8rem;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  word-wrap: break-word;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+/* Admin à droite */
+.message.admin {
+  align-self: flex-end;
+  background: var(--accent);
+  color: #000;
+  border-top-right-radius: 2px;
+}
+
+/* User à gauche */
+.message.user {
+  align-self: flex-start;
+  background: var(--border);
+  color: var(--text);
+  border-top-left-radius: 2px;
+}
+
+/* Meta (date + vu) */
+.message .meta {
+  font-size: 0.75rem;
+  color: var(--muted);
+  display: flex;
+  justify-content: space-between;
+}
+
+.meta .viewed {
+  font-weight: bold;
+}
+
+.meta .viewed.true {
+  color: var(--accent);
+}
+
+.meta .viewed.false {
+  color: var(--warning);
+}
+
+/* Bouton suppression message */
+.message button {
+  align-self: flex-end;
+  margin-top: 0.2rem;
+  font-size: 0.7rem;
+  padding: 0.25rem 0.6rem;
+}
+
+/* ================= SCROLLBAR ================= */
+#conversationContainer::-webkit-scrollbar {
+  width: 8px;
+}
+
+#conversationContainer::-webkit-scrollbar-track {
+  background: var(--panel);
+}
+
+#conversationContainer::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+#conversationContainer::-webkit-scrollbar-thumb:hover {
+  background: var(--muted);
+}
+
+/* ================= RESPONSE ZONE ================= */
+textarea {
+  width: 100%;
+  padding: 0.6rem;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  resize: vertical;
+  min-height: 90px;
+}
+
+.response-actions {
+  display: flex;
+  gap: 0.6rem;
+  margin-top: 0.5rem;
+}
+
+/* ================= BUTTONS ================= */
+.btn {
+  padding: 0.45rem 0.9rem;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.btn-danger {
+  background: var(--danger);
+  color: #fff;
+}
+
+.btn-accent {
+  background: var(--accent);
+  color: #000;
+}
+
+.btn-warning {
+  background: var(--warning);
+  color: #000;
+}
+
+/* ================= OLD TICKETS ================= */
+#oldTicketsContainer {
+  display: none;
+  margin-top: 0.8rem;
+  border: 1px solid var(--border);
+  padding: 0.6rem;
+  border-radius: 6px;
+  background: var(--card);
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.ticket-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.4rem 0.6rem;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.85rem;
+}
+
+.ticket-item:last-child {
+  border-bottom: none;
+}
+
+/* ================= FOOTER ================= */
+footer {
+  margin-top: 2rem;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<a href="dashboard.html">Tableau de bord</a>
+<header>
+  <h1>Support Ticket <span id="ticketID"></span></h1>
+  <div class="badge normal" id="ticketBadge">NORMAL</div>
+  <div>Status: <span id="ticketStatus">—</span></div>
+  <button class="btn btn-warning" id="toggleOld">Anciens Tickets</button>
+</header>
+
+<main>
+  <!-- Section Ticket -->
+  <div class="section" id="ticketSection">
+    <h2>Ticket</h2>
+    <div class="ticket-info">
+      <div>Sujet: <span id="ticketSubject"></span></div>
+      <div>Message: <span id="ticketMessage"></span></div>
+      <div>Auteur: <span id="ticketUser"></span></div>
+      <div>Date: <span id="ticketDate"></span></div>
+      <div>Status: <span id="ticketStatus2"></span></div>
+    </div>
+    <button class="btn btn-danger" id="deleteTicket">Supprimer le ticket</button>
+  </div>
+
+  <!-- Zone Conversation -->
+  <div class="section">
+    <h2>Conversation</h2>
+    <div class="conversation" id="conversationContainer">
+      <!-- messages admin/user ici -->
+    </div>
+  </div>
+
+  <!-- Réponse Admin -->
+  <div class="section">
+    <h2>Réponse Admin</h2>
+    <textarea id="adminResponse" placeholder="Écrire votre réponse..."></textarea>
+    <div class="response-actions">
+      <button class="btn btn-accent" id="sendResponse">Envoyer</button>
+      <select id="statusSelector">
+        <option value="open">Ouvert</option>
+        <option value="in_progress">En cours</option>
+        <option value="closed">Fermé</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Liste Anciens Tickets -->
+  <div class="section old-tickets" id="oldTicketsContainer">
+    <h2>Anciens Tickets</h2>
+    <!-- tickets précédents -->
+  </div>
+</main>
+
+<footer>
+  © CBC Business - Support Admin
+</footer>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js";
+import {
+  getFirestore,
+  collection,
+  getDocs,
+  doc,
+  getDoc,
+  updateDoc,
+  deleteDoc,
+  query,
+  where,
+  addDoc,
+  orderBy
+} from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+
+/* ================================
+   CONFIG
+================================ */
+const firebaseConfig = {
+  apiKey: "AIzaSyBla3D7OS8-Hx82m8Tz6ZPIS7FSLury3ew",
+  authDomain: "cbc-business.firebaseapp.com",
+  projectId: "cbc-business",
+  storageBucket: "cbc-business.firebasestorage.app",
+  messagingSenderId: "295952883135",
+  appId: "1:295952883135:web:4624174a452c1f6aad950a",
+  measurementId: "G-580W4D6J7E"
+};
+
+/* ================================
+   INIT
+================================ */
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+/* ================================
+   ELEMENTS UI
+================================ */
+const ticketIDEl = document.getElementById("ticketID");
+const ticketBadge = document.getElementById("ticketBadge");
+const ticketStatus = document.getElementById("ticketStatus");
+const ticketSubject = document.getElementById("ticketSubject");
+const ticketMessage = document.getElementById("ticketMessage");
+const ticketUser = document.getElementById("ticketUser");
+const ticketDate = document.getElementById("ticketDate");
+const ticketStatus2 = document.getElementById("ticketStatus2");
+const conversationContainer = document.getElementById("conversationContainer");
+const adminResponse = document.getElementById("adminResponse");
+const sendResponseBtn = document.getElementById("sendResponse");
+const statusSelector = document.getElementById("statusSelector");
+const deleteTicketBtn = document.getElementById("deleteTicket");
+const toggleOldBtn = document.getElementById("toggleOld");
+const oldTicketsContainer = document.getElementById("oldTicketsContainer");
+
+/* ================================
+   URL PARAMS
+================================ */
+const urlParams = new URLSearchParams(window.location.search);
+const ticketIDParam = urlParams.get("ticket");
+const ownerIDParam = urlParams.get("owner");
+
+/* ================================
+   SECURITY CHECK
+================================ */
+async function checkAdminAccess(user) {
+  const userRef = doc(db, "users", user.uid);
+  const adminRef = doc(db, "admins", user.uid);
+
+  const [userSnap, adminSnap] = await Promise.all([
+    getDoc(userRef),
+    getDoc(adminRef)
+  ]);
+
+  if (!userSnap.exists() || !adminSnap.exists()) return false;
+
+  const uRole = userSnap.data().role;
+  const aRole = adminSnap.data().role;
+
+  return uRole === "admin" && (aRole === "master" || aRole === "adminA");
+}
+
+/* ================================
+   LOAD TICKET
+================================ */
+async function loadTicket() {
+  if (!ownerIDParam) {
+    alert("Utilisateur cible manquant !");
+    return;
+  }
+
+  let ticketDocRef;
+  let ticketData;
+
+  if (ticketIDParam) {
+    ticketDocRef = doc(db, "support", ticketIDParam);
+    const snap = await getDoc(ticketDocRef);
+    if (!snap.exists()) {
+      alert("Ticket introuvable !");
+      return;
+    }
+    ticketData = snap.data();
+    await updateDoc(ticketDocRef, { viewed: true });
+  } else {
+    ticketData = {
+      subject: "Nouvelle conversation admin",
+      message: "",
+      status: "open",
+      abuseReports: false,
+      userID: ownerIDParam,
+      timestamp: new Date(),
+      viewed: true
+    };
+  }
+
+  ticketIDEl.textContent = ticketIDParam || "(nouveau)";
+  ticketBadge.textContent = ticketData.abuseReports ? "ABUSE" : "NORMAL";
+  ticketBadge.className = `badge ${ticketData.abuseReports ? "abuse" : "normal"}`;
+  ticketStatus.textContent = ticketData.status;
+  ticketSubject.textContent = ticketData.subject;
+  ticketMessage.textContent = ticketData.message;
+  ticketUser.textContent = ticketData.userID;
+  ticketDate.textContent = ticketData.timestamp?.toDate ? ticketData.timestamp.toDate().toLocaleString() : new Date(ticketData.timestamp).toLocaleString();
+  ticketStatus2.textContent = ticketData.status;
+
+  loadConversation(ticketIDParam);
+  loadOldTickets(ticketData.userID);
+}
+
+/* ================================
+   LOAD CONVERSATION
+   (Optimized UI: messages left/right, colors, scrollbar, lu/non lu)
+================================ */
+async function loadConversation(ticketID) {
+  conversationContainer.innerHTML = "";
+  if (!ticketID) return;
+
+  conversationContainer.style.maxHeight = "400px";
+  conversationContainer.style.overflowY = "auto";
+  conversationContainer.style.padding = "1rem";
+  conversationContainer.style.border = "1px solid var(--border)";
+  conversationContainer.style.borderRadius = "8px";
+  conversationContainer.style.background = "var(--panel)";
+
+  const reponsesRef = collection(db, `support/${ticketID}/reponses`);
+  const snap = await getDocs(query(reponsesRef, orderBy("timestamp", "asc")));
+
+  snap.forEach(docSnap => {
+    const r = docSnap.data();
+    const div = document.createElement("div");
+    div.className = `message-bubble ${r.admin ? "admin-msg" : "user-msg"}`;
+    div.style.display = "flex";
+    div.style.flexDirection = "column";
+    div.style.alignItems = r.admin ? "flex-end" : "flex-start";
+    div.style.marginBottom = "0.5rem";
+
+    const meta = document.createElement("div");
+    meta.textContent = `${r.admin ? "Admin" : "Utilisateur"} — ${r.timestamp?.toDate ? r.timestamp.toDate().toLocaleString() : new Date(r.timestamp).toLocaleString()} — ${r.viewed ? "Lu" : "Non lu"}`;
+    meta.style.fontSize = "0.75rem";
+    meta.style.color = "var(--muted)";
+    meta.style.marginBottom = "0.2rem";
+
+    const message = document.createElement("div");
+    message.textContent = r.reponse;
+    message.style.padding = "0.6rem 1rem";
+    message.style.borderRadius = "12px";
+    message.style.maxWidth = "70%";
+    message.style.background = r.admin ? "var(--accent)" : "var(--card)";
+    message.style.color = r.admin ? "#000" : "#e5e7eb";
+
+    const btnDel = document.createElement("button");
+    btnDel.textContent = "Supprimer";
+    btnDel.className = "btn btn-danger";
+    btnDel.style.marginTop = "0.2rem";
+    btnDel.addEventListener("click", async () => {
+      if (confirm("Supprimer ce message ?")) {
+        await deleteDoc(doc(db, `support/${ticketID}/reponses`, docSnap.id));
+        loadConversation(ticketID);
+      }
+    });
+
+    div.appendChild(meta);
+    div.appendChild(message);
+    div.appendChild(btnDel);
+    conversationContainer.appendChild(div);
+  });
+}
+
+/* ================================
+   SEND RESPONSE
+================================ */
+sendResponseBtn.addEventListener("click", async () => {
+  const text = adminResponse.value.trim();
+  if (!text) return alert("Écrire un message avant d'envoyer");
+  if (!ticketIDParam) return alert("Ticket introuvable");
+
+  const reponsesRef = collection(db, `support/${ticketIDParam}/reponses`);
+  await addDoc(reponsesRef, {
+    reponse: text,
+    admin: true,
+    status: statusSelector.value,
+    timestamp: new Date(),
+    viewed: false
+  });
+
+  await updateDoc(doc(db, "support", ticketIDParam), { status: statusSelector.value });
+  adminResponse.value = "";
+  loadConversation(ticketIDParam);
+  loadTicket();
+});
+
+/* ================================
+   DELETE TICKET
+================================ */
+deleteTicketBtn.addEventListener("click", async () => {
+  if (!ticketIDParam) return alert("Ticket introuvable");
+  if (confirm("Supprimer ce ticket et toutes ses réponses ?")) {
+    const reponsesRef = collection(db, `support/${ticketIDParam}/reponses`);
+    const snap = await getDocs(reponsesRef);
+    for (const docSnap of snap.docs) {
+      await deleteDoc(doc(db, `support/${ticketIDParam}/reponses`, docSnap.id));
+    }
+    await deleteDoc(doc(db, "support", ticketIDParam));
+    alert("Ticket supprimé");
+    window.location.href = "supportAdmin.html";
+  }
+});
+
+/* ================================
+   OLD TICKETS TOGGLE
+================================ */
+toggleOldBtn.addEventListener("click", () => {
+  oldTicketsContainer.style.display = oldTicketsContainer.style.display === "block" ? "none" : "block";
+});
+
+/* ================================
+   LOAD OLD TICKETS
+================================ */
+async function loadOldTickets(userID) {
+  oldTicketsContainer.innerHTML = "";
+  const q = query(collection(db, "support"), where("userID", "==", userID));
+  const snap = await getDocs(q);
+  snap.forEach(docSnap => {
+    const t = docSnap.data();
+    const div = document.createElement("div");
+    div.className = "ticket-item";
+    div.innerHTML = `
+      <span>${t.subject || "(Sans objet)"} — ${t.status} — ${t.timestamp?.toDate ? t.timestamp.toDate().toLocaleString() : new Date(t.timestamp).toLocaleString()}</span>
+      <button class="btn btn-danger" data-ticketid="${docSnap.id}">Supprimer</button>
+    `;
+    oldTicketsContainer.appendChild(div);
+
+    div.querySelector("button").addEventListener("click", async () => {
+      if (confirm("Supprimer ce ticket et toutes ses réponses ?")) {
+        const reponsesRef = collection(db, `support/${docSnap.id}/reponses`);
+        const snapR = await getDocs(reponsesRef);
+        for (const rDoc of snapR.docs) {
+          await deleteDoc(doc(db, `support/${docSnap.id}/reponses`, rDoc.id));
+        }
+        await deleteDoc(doc(db, "support", docSnap.id));
+        loadOldTickets(userID);
+      }
+    });
+  });
+}
+
+/* ================================
+   AUTH LISTENER
+================================ */
+onAuthStateChanged(auth, async (user) => {
+  if (!user) {
+    location.href = "/login.html";
+    return;
+  }
+
+  const allowed = await checkAdminAccess(user);
+  if (!allowed) {
+    alert("⛔ Accès refusé");
+    location.href = "/";
+    return;
+  }
+
+  loadTicket();
+});
+</script>
+</body>
+</html>

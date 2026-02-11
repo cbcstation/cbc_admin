@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>CBC Business – Admin Super Panel</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #111827;
+      --card: #1f2933;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --accent: #22c55e;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --border: #374151;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    /* ===== HEADER ===== */
+    
+      header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem;
+    background: var(--panel);
+    color: white;
+    position: relative;
+  }
+
+  .hamburger {
+    font-size: 1.8rem;
+    cursor: pointer;
+  }
+
+  nav ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    background: #1565c0;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 200px;
+  }
+
+  nav ul li a {
+    display: block;
+    padding: 0.8rem 1rem;
+    color: white;
+    text-decoration: none;
+    border-bottom: 1px solid #0d47a1;
+  }
+
+  nav ul li a:hover {
+    background: #0b3d91;
+  }
+
+  .hidden {
+    display: none;
+  }
+
+    header h1 {
+      font-size: 1.2rem;
+      font-weight: 600;
+    }
+    .hamburger {
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+    main {
+      padding: 1.5rem;
+      display: grid;
+      gap: 2rem;
+    }
+    .admin-search-only {
+  margin: 1.5rem 0;
+}
+
+.admin-search-only label {
+  display: block;
+  font-size: .85rem;
+  color: #94a3b8;
+  margin-bottom: .4rem;
+}
+
+.search-line {
+  display: flex;
+  gap: .6rem;
+}
+
+.search-line input {
+  flex: 1;
+  padding: .6rem .8rem;
+  border-radius: 6px;
+  border: 1px solid #334155;
+  background: #020617;
+  color: #fff;
+}
+
+.search-line button {
+  padding: .6rem 1.2rem;
+  border-radius: 6px;
+  border: none;
+  background: #2563eb;
+  color: #fff;
+  cursor: pointer;
+}
+
+.search-line button:hover {
+  background: #1d4ed8;
+}
+
+    .section {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.5rem;
+    }
+
+    .section h2 {
+      margin-bottom: 1rem;
+      font-size: 1.1rem;
+      border-left: 4px solid var(--accent);
+      padding-left: 0.6rem;
+    }
+
+    .unlock-box {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+
+    .unlock-box input {
+      flex: 1;
+      padding: 0.6rem;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: #020617;
+      color: var(--text);
+    }
+
+    .unlock-box button {
+      padding: 0.6rem 1rem;
+      background: var(--accent);
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+
+    th, td {
+      border: 1px solid var(--border);
+      padding: 0.6rem;
+      text-align: left;
+      font-size: 0.9rem;
+    }
+
+    th {
+      background: #020617;
+      color: var(--muted);
+    }
+
+    .actions button {
+      margin-right: 0.3rem;
+      padding: 0.35rem 0.6rem;
+      font-size: 0.8rem;
+      border-radius: 4px;
+      border: none;
+      cursor: pointer;
+    }
+
+    .btn-edit {
+      background: var(--warning);
+      color: #000;
+    }
+
+    .btn-delete {
+      background: var(--danger);
+      color: #fff;
+    }
+
+    .btn-validate {
+      background: var(--accent);
+      color: #000;
+    }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+    }
+
+    .kpi {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+    }
+
+    .kpi span {
+      display: block;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    .kpi strong {
+      font-size: 1.4rem;
+    }
+
+    footer {
+      text-align: center;
+      padding: 1rem;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+      margin-top: 3rem;
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <div class="hamburger">☰</div>
+  <h1>CBC Business – Super Admin</h1>
+  <!-- Menu caché, s'affiche au clic sur hamburger -->
+  <nav id="admin-nav" class="hidden">
+    <ul>
+      <li><a href="dashboard.html">Tableau de bord</a></li>
+      <li><a href="circle.html">Cercle Admins</a></li>
+      <li><a href="super_admin.html">Management</a></li>
+      <li><a href="searchUser.html">Chercher un User</a></li>
+      <li><a href="tickets.html">Support Client</a></li>
+    </ul>
+  </nav>
+</header>
+
+<main>
+
+  <!-- 🔐 Activation par clé -->
+  <section class="section">
+    <h2>🔐 Déverrouillage des fonctionnalités</h2>
+    <p class="muted">
+      Accès conditionné : Auth Firebase + users.role = admin + présence dans admins + clé/code.
+    </p>
+
+    <div class="unlock-box">
+      <input type="password" placeholder="Entrer la clé de sécurité admin">
+      <button>Déverrouiller</button>
+    </div>
+  </section>
+  
+  <section class="admin-search-only">
+  <label for="searchUserId">
+    Recherche ciblée par UserID
+  </label>
+  <div class="search-line">
+    <input
+      type="text"
+      id="searchUserId"
+      placeholder="Entrer le UserID exact"
+      autocomplete="off"
+    /><br>
+    <button id="btnSearchUser">
+      Chercher
+    </button>
+  </div>
+</section>
+
+  <!-- 📊 KPI -->
+  <section class="section">
+    <h2>📊 Statistiques globales</h2>
+
+    <div class="kpi-grid">
+      <div class="kpi"><span>Annonces totales</span><strong>—</strong></div>
+      <div class="kpi"><span>Annonces actives</span><strong>—</strong></div>
+      <div class="kpi"><span>Annonces rendues</span><strong>—</strong></div>
+      <div class="kpi"><span>Boosts actifs</span><strong>—</strong></div>
+      <div class="kpi"><span>Urgences actives</span><strong>—</strong></div>
+      <div class="kpi"><span>Copywriting en cours</span><strong>—</strong></div>
+      <div class="kpi"><span>Total paiements</span><strong>—</strong></div>
+      <div class="kpi"><span>Revenus</span><strong>—</strong></div>
+    </div>
+  </section>
+
+  <!-- 📢 Annonces -->
+  <section class="section">
+    <h2>📢 Gestion des annonces</h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Titre</th>
+          <th>Catégorie</th>
+          <th>Salaire</th>
+          <th>État</th>
+          <th>Options</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Annonce exemple</td>
+          <td>Design</td>
+          <td>500$</td>
+          <td>actif</td>
+          <td class="actions">
+            <button class="btn-edit">Modifier</button>
+            <button class="btn-validate">Boost</button>
+            <button class="btn-delete">Supprimer</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- 👤 Utilisateurs -->
+  <section class="section">
+    <h2>👤 Gestion des utilisateurs</h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Nom</th>
+          <th>Email</th>
+          <th>Type</th>
+          <th>Active</th>
+          <th>Vérifié</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>User Exemple</td>
+          <td>user@mail.com</td>
+          <td>personnel</td>
+          <td>true</td>
+          <td>false</td>
+          <td class="actions">
+            <button class="btn-edit">Modifier</button>
+            <button class="btn-delete">Supprimer</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- 💬 Commentaires -->
+  <section class="section">
+    <h2>💬 Commentaires & Feedbacks</h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Contenu</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Commentaire</td>
+          <td>Très bon service</td>
+          <td>pending</td>
+          <td class="actions">
+            <button class="btn-validate">Approuver</button>
+            <button class="btn-delete">Rejeter</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- 💰 Paiements -->
+  <section class="section">
+    <h2>💰 Monétisation & campagnes</h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>User</th>
+          <th>Type</th>
+          <th>Montant</th>
+          <th>Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>userID</td>
+          <td>Boost</td>
+          <td>10$</td>
+          <td>—</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+</main>
+<script>
+  const hamburger = document.querySelector('.hamburger');
+  const nav = document.getElementById('admin-nav');
+
+  hamburger.addEventListener('click', () => {
+    nav.classList.toggle('hidden');
+  });
+</script>
+<script type="module">
+/* ================================
+   CONFIG FIREBASE
+================================ */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
+import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-analytics.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js";
+import { 
+  getFirestore, doc, getDoc, collection, query, where, getDocs, addDoc, updateDoc, deleteDoc, serverTimestamp 
+} from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+
+/* =========================
+   FIREBASE CONFIG
+========================= */
+const firebaseConfig = {
+  apiKey: "AIzaSyBla3D7OS8-Hx82m8Tz6ZPIS7FSLury3ew",
+  authDomain: "cbc-business.firebaseapp.com",
+  projectId: "cbc-business",
+  storageBucket: "cbc-business.firebasestorage.app",
+  messagingSenderId: "295952883135",
+  appId: "1:295952883135:web:4624174a452c1f6aad950a",
+  measurementId: "G-580W4D6J7E"
+};
+
+/* =========================
+   INIT
+========================= */
+const app = initializeApp(firebaseConfig);
+getAnalytics(app);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+/* ================================
+   ETAT GLOBAL
+================================ */
+let currentUser = null;
+let isUnlocked = false;
+
+/* ================================
+   ELEMENTS UI
+================================ */
+const lockScreen = document.querySelector(".unlock-box input");
+const unlockBtn = document.querySelector(".unlock-box button");
+
+const searchInput = document.getElementById("searchUserId");
+const searchBtn = document.getElementById("btnSearchUser");
+
+const annoncesTable = document.querySelector("section.section:nth-of-type(3) tbody");
+const usersTable = document.querySelector("section.section:nth-of-type(4) tbody");
+const commentsTable = document.querySelector("section.section:nth-of-type(5) tbody");
+const paymentsTable = document.querySelector("section.section:nth-of-type(6) tbody");
+
+/* ================================
+   LOGS
+================================ */
+async function logAction(action, target = null) {
+  if (!currentUser) return;
+  await addDoc(collection(db, "logs"), {
+    adminID: currentUser.uid,
+    action,
+    target,
+    timestamp: serverTimestamp()
+  });
+}
+
+/* ================================
+   SECURITE ADMIN
+================================ */
+async function checkAdminSecurity(user) {
+  const userSnap = await getDoc(doc(db, "users", user.uid));
+  const adminSnap = await getDoc(doc(db, "admins", user.uid));
+
+  if (!userSnap.exists() || !adminSnap.exists()) return false;
+  if (userSnap.data().role !== "admin") return false;
+  if (!adminSnap.data().role) return false;
+
+  return true;
+}
+
+/* ================================
+   AUTH
+================================ */
+onAuthStateChanged(auth, async (user) => {
+  if (!user) {
+    window.location.href = "/login.html";
+    return;
+  }
+
+  const allowed = await checkAdminSecurity(user);
+  if (!allowed) {
+    await logAction("ACCESS_DENIED");
+    window.location.href = "/";
+    return;
+  }
+
+  currentUser = user;
+});
+
+/* ================================
+   UNLOCK
+================================ */
+unlockBtn.addEventListener("click", async () => {
+  const code = lockScreen.value.trim();
+  if (!code) return alert("Code requis");
+
+  const adminSnap = await getDoc(doc(db, "admins", currentUser.uid));
+  if (!adminSnap.exists()) return;
+
+  if (code !== adminSnap.data().secretCode) {
+    await logAction("UNLOCK_FAILED");
+    return alert("Code incorrect");
+  }
+
+  isUnlocked = true;
+  alert("✅ Fonctions déverrouillées");
+  await logAction("ADMIN_PANEL_UNLOCKED");
+});
+
+/* ================================
+   GUARD
+================================ */
+function requireUnlock(action) {
+  if (!isUnlocked) {
+    logAction("BLOCKED_ACTION", action);
+    alert("🔒 Action verrouillée");
+    return false;
+  }
+  return true;
+}
+
+/* ================================
+   RECHERCHE USER & SES DONNEES
+================================ */
+searchBtn.addEventListener("click", async () => {
+  if (!requireUnlock("SEARCH_USER")) return;
+
+  const uid = searchInput.value.trim();
+  if (!uid) return alert("UserID requis");
+
+  annoncesTable.innerHTML = "";
+  usersTable.innerHTML = "";
+  commentsTable.innerHTML = "";
+  paymentsTable.innerHTML = "";
+
+  // --- USER ---
+  const userSnap = await getDoc(doc(db, "users", uid));
+  if (!userSnap.exists()) return alert("Utilisateur introuvable");
+  const u = userSnap.data();
+  usersTable.innerHTML = `
+    <tr>
+      <td>${u.name || "-"}</td>
+      <td>${u.email || "-"}</td>
+      <td>${u.type || "-"}</td>
+      <td>${u.active || false}</td>
+      <td>${u.verified || false}</td>
+      <td class="actions">
+        <button onclick="updateUser('${uid}')">Modifier</button>
+        <button onclick="toggleUser('${uid}', ${!u.active})">${u.active ? 'Désactiver' : 'Activer'}</button>
+      </td>
+    </tr>
+  `;
+
+  // --- ANNONCES ---
+  const annoncesSnap = await getDocs(query(collection(db, "annonces"), where("userID", "==", uid)));
+  if (!annoncesSnap.empty) {
+    annoncesSnap.forEach(docu => {
+      const a = docu.data();
+      annoncesTable.innerHTML += `
+        <tr>
+          <td>${a.titre || "-"}</td>
+          <td>${a.categorie || "-"}</td>
+          <td>${a.salaire || "-"}</td>
+          <td>${a.etat || "-"}</td>
+          <td class="actions">
+            <button onclick="deleteAnnonce('${docu.id}')">Supprimer</button>
+            <button onclick="updateAnnonce('${docu.id}')">Modifier</button>
+          </td>
+        </tr>
+      `;
+    });
+  }
+
+  // --- COMMENTAIRES & FEEDBACKS ---
+  const commentsSnap = await getDocs(query(collection(db, "feedbacks"), where("userID", "==", uid)));
+  if (!commentsSnap.empty) {
+    commentsSnap.forEach(docu => {
+      const c = docu.data();
+      commentsTable.innerHTML += `
+        <tr>
+          <td>${c.type || "-"}</td>
+          <td>${c.contenu || "-"}</td>
+          <td>${c.status || "-"}</td>
+          <td class="actions">
+            <button onclick="approveFeedback('${docu.id}')">Approuver</button>
+            <button onclick="rejectFeedback('${docu.id}')">Rejeter</button>
+          </td>
+        </tr>
+      `;
+    });
+  }
+
+  // --- PAIEMENTS ---
+  const paymentsSnap = await getDocs(query(collection(db, "paiements"), where("userID", "==", uid)));
+  if (!paymentsSnap.empty) {
+    paymentsSnap.forEach(docu => {
+      const p = docu.data();
+      paymentsTable.innerHTML += `
+        <tr>
+          <td>${uid}</td>
+          <td>${p.type || "-"}</td>
+          <td>${p.montant || "-"}</td>
+          <td>${p.date?.toDate()?.toLocaleString() || "-"}</td>
+        </tr>
+      `;
+    });
+  }
+
+  await logAction("SEARCH_USER_SUCCESS", uid);
+});
+
+/* ================================
+   ACTIONS SENSIBLES
+================================ */
+window.deleteAnnonce = async (annonceId) => {
+  if (!requireUnlock("DELETE_ANNONCE")) return;
+  await deleteDoc(doc(db, "annonces", annonceId));
+  await logAction("DELETE_ANNONCE", annonceId);
+  alert("Annonce supprimée");
+};
+
+window.updateAnnonce = async (annonceId) => {
+  if (!requireUnlock("UPDATE_ANNONCE")) return;
+  const docRef = doc(db, "annonces", annonceId);
+  const snap = await getDoc(docRef);
+  if (!snap.exists()) return alert("Annonce introuvable");
+
+  const titre = prompt("Titre", snap.data().titre);
+  const categorie = prompt("Catégorie", snap.data().categorie);
+  const salaire = prompt("Salaire", snap.data().salaire);
+  const etat = prompt("État", snap.data().etat);
+
+  await updateDoc(docRef, { titre, categorie, salaire, etat });
+  await logAction("UPDATE_ANNONCE", annonceId);
+  alert("Annonce modifiée");
+};
+
+window.updateUser = async (userId) => {
+  if (!requireUnlock("UPDATE_USER")) return;
+  const userRef = doc(db, "users", userId);
+  const snap = await getDoc(userRef);
+  if (!snap.exists()) return alert("Utilisateur introuvable");
+
+  const name = prompt("Nom", snap.data().name);
+  const email = prompt("Email", snap.data().email);
+  const type = prompt("Type", snap.data().type);
+
+  await updateDoc(userRef, { name, email, type });
+  await logAction("UPDATE_USER", userId);
+  alert("Utilisateur modifié");
+};
+
+window.toggleUser = async (userId, state) => {
+  if (!requireUnlock("TOGGLE_USER")) return;
+  await updateDoc(doc(db, "users", userId), { active: state });
+  await logAction(state ? "USER_ACTIVATED" : "USER_DISABLED", userId);
+  alert(state ? "Utilisateur activé" : "Utilisateur désactivé");
+};
+
+window.approveFeedback = async (id) => {
+  if (!requireUnlock("APPROVE_FEEDBACK")) return;
+  await updateDoc(doc(db, "feedbacks", id), { status: "approved" });
+  await logAction("FEEDBACK_APPROVED", id);
+};
+
+window.rejectFeedback = async (id) => {
+  if (!requireUnlock("REJECT_FEEDBACK")) return;
+  await updateDoc(doc(db, "feedbacks", id), { status: "rejected" });
+  await logAction("FEEDBACK_REJECTED", id);
+};
+</script>
+<footer>
+  Version 1.0 · © 2026 · CBC Business Admin Super Panel
+</footer>
+
+</body>
+</html>

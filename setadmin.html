@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Set Admin – CBC Station</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #fff;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 500px;
+      margin: auto;
+      background: #020617;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 20px rgba(0,0,0,.5);
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    label {
+      font-size: 14px;
+      margin-top: 10px;
+      display: block;
+    }
+  .admin-password-container {
+    max-width: 400px;
+    margin: 1rem auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    font-family: Arial, sans-serif;
+  }
+
+  .admin-password-container label {
+    font-weight: bold;
+    font-size: 0.95rem;
+    color: #333;
+  }
+
+  .admin-password-container input {
+    padding: 0.5rem 0.75rem;
+    font-size: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .admin-password-container input:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.4);
+  }
+    input, select, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border-radius: 5px;
+      border: none;
+      font-size: 14px;
+    }
+
+    input, select {
+      background: #1e293b;
+      color: #fff;
+    }
+
+    button {
+      margin-top: 20px;
+      background: #22c55e;
+      color: #000;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #16a34a;
+    }
+
+    .error {
+      color: #f87171;
+      margin-top: 10px;
+      text-align: center;
+    }
+
+    .success {
+      color: #4ade80;
+      margin-top: 10px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+<a href="dashboard.html">Tableau de bord</a>
+<div class="container">  
+  <h2>🔐 SET ADMIN (MASTER)</h2>  
+
+  <label>UserID à promouvoir</label>
+  <input type="text" id="targetUserID" placeholder="ex: uid_xxxxxx">
+
+  <label>Nom admin (optionnel)</label>
+  <input type="text" id="adminName" placeholder="Nom affiché">
+
+  <label>Rôle admin</label>
+  <select id="adminRole">
+    <option value="adminA">adminA</option>
+    <option value="adminB">adminB</option>
+  </select>
+
+  <div class="admin-password-container">  
+    <label for="adminPassword">Mot de passe admin</label>  
+    <input type="password" id="adminPassword" placeholder="Entrer le mot de passe">  
+  </div>
+
+  <label>Code secret + "_" + UserID</label>
+  <input type="password" id="secureCode" placeholder="CODESECRET_userID">
+
+  <button id="setAdminBtn">PROMOUVOIR EN ADMIN</button>
+
+  <div id="msg"></div>  
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-analytics.js";
+  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js";
+  import { getFirestore, doc, getDoc, setDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+
+  // 🔹 Config Firebase (ton vrai projet)
+  const firebaseConfig = {
+    apiKey: "AIzaSyBla3D7OS8-Hx82m8Tz6ZPIS7FSLury3ew",
+    authDomain: "cbc-business.firebaseapp.com",
+    projectId: "cbc-business",
+    storageBucket: "cbc-business.firebasestorage.app",
+    messagingSenderId: "295952883135",
+    appId: "1:295952883135:web:4624174a452c1f6aad950a",
+    measurementId: "G-580W4D6J7E"
+  };
+
+  // 🔹 Initialisation Firebase
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+const msg = document.getElementById("msg");
+
+// Vérification de l'admin connecté
+onAuthStateChanged(auth, async (user) => {
+  if (!user) {
+    location.href = "index.html";
+    return;
+  }
+
+  try {
+    const userRef = doc(db, "users", user.uid);
+    const adminRef = doc(db, "admins", user.uid);
+
+    const [userSnap, adminSnap] = await Promise.all([
+      getDoc(userRef),
+      getDoc(adminRef)
+    ]);
+
+    if (
+      !userSnap.exists() || userSnap.data().role !== "admin" ||
+      !adminSnap.exists() || adminSnap.data().role !== "master"
+    ) {
+      alert("⛔ Accès refusé : vous devez être un master admin");
+      location.href = "index.html";
+      return;
+    }
+  } catch (err) {
+    alert("Erreur lors de la vérification de l'admin : " + err.message);
+    location.href = "index.html";
+  }
+});
+
+document.getElementById("setAdminBtn").addEventListener("click", async () => {
+  msg.innerHTML = "";
+
+  const targetUserID = document.getElementById("targetUserID").value.trim();
+  const adminName = document.getElementById("adminName").value.trim();
+  const adminRole = document.getElementById("adminRole").value;
+  const secureCode = document.getElementById("secureCode").value.trim();
+  const secretCode = document.getElementById("adminPassword").value.trim();
+
+  if (!targetUserID || !secureCode || !secretCode) {
+    msg.innerHTML = "<div class='error'>Champs obligatoires manquants</div>";
+    return;
+  }
+
+  try {
+    // 🔹 Récupérer le master admin connecté
+    const currentAdminRef = doc(db, "admins", auth.currentUser.uid);
+    const currentAdminSnap = await getDoc(currentAdminRef);
+
+    if (!currentAdminSnap.exists() || currentAdminSnap.data().role !== "master") {
+      msg.innerHTML = "<div class='error'>⛔ Vous n'êtes pas autorisé</div>";
+      return;
+    }
+
+    const SECRET_CODE = currentAdminSnap.data().secretCode;
+
+    // Vérifier le code secret + UserID de l'admin connecté
+    if (secureCode !== `${SECRET_CODE}_${auth.currentUser.uid}`) {
+      msg.innerHTML = "<div class='error'>Code de sécurité invalide</div>";
+      return;
+    }
+
+    // 🔹 Vérifier que la cible existe dans users
+    const targetUserRef = doc(db, "users", targetUserID);
+    const targetUserSnap = await getDoc(targetUserRef);
+
+    if (!targetUserSnap.exists()) {
+      msg.innerHTML = "<div class='error'>Utilisateur cible introuvable</div>";
+      return;
+    }
+
+    // 🔹 Mettre à jour le rôle de l'utilisateur cible dans `users`
+    await updateDoc(targetUserRef, { role: "admin" });
+
+    // 🔹 Créer ou mettre à jour le document dans `admins`
+    await setDoc(doc(db, "admins", targetUserID), {
+      userID: targetUserID,
+      role: adminRole,
+      name: adminName || "Admin CBC",
+      secretCode: secretCode,
+      createdAt: serverTimestamp()
+    });
+
+    msg.innerHTML = "<div class='success'>✅ Admin créé et rôle mis à jour avec succès</div>";
+
+  } catch (err) {
+    msg.innerHTML = "<div class='error'>Erreur : " + err.message + "</div>";
+  }
+});
+</script>
+</body>
+</html>

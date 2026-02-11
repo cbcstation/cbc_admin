@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Circle</title>
+
+<style>
+:root {
+  --bg: #0f172a;
+  --panel: #111827;
+  --card: #1f2933;
+  --text: #e5e7eb;
+  --muted: #9ca3af;
+  --accent: #22c55e;
+  --danger: #ef4444;
+  --border: #374151;
+
+  --master-color: #ff3b3b;
+  --adminA-color: #2ecc71;
+  --adminB-color: #3498db;
+}
+
+* { box-sizing: border-box; margin:0; padding:0; font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+header {
+  background: var(--panel);
+  padding: 1rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+header h1 {
+  font-size: 1.5rem;
+}
+
+#pinnedMessageBox {
+  background: #222831;
+  padding: 0.5rem 1rem;
+  color: #fff;
+  font-size: 0.85rem;
+  border-left: 4px solid var(--accent);
+  cursor: pointer;
+  margin-bottom: 0.5rem;
+  display: none; /* apparaît si un message est épinglé */
+}
+
+#conversationContainer {
+  flex: 1;
+  padding: 1rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.message-bubble {
+  display: flex;
+  flex-direction: column;
+  max-width: 70%;
+  position: relative;
+  word-wrap: break-word;
+  padding: 0.6rem 1rem;
+  border-radius: 12px;
+}
+
+.message-bubble.right { align-self: flex-end; }
+.message-bubble.left { align-self: flex-start; }
+
+.message-meta {
+  font-size: 0.7rem;
+  color: var(--muted);
+  margin-bottom: 0.3rem;
+  display: flex;
+  justify-content: space-between;
+}
+
+.message-bubble .replyPreview {
+  font-size: 0.75rem;
+  background: #333;
+  color: #ccc;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  margin-bottom: 0.3rem;
+  cursor: pointer;
+}
+
+.message-bubble.deleted { opacity: 0.6; font-style: italic; }
+
+.message-bubble .actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.3rem;
+  font-size: 0.7rem;
+}
+
+.message-bubble .actions span {
+  cursor: pointer;
+  color: var(--accent);
+}
+
+textarea {
+  width: 100%;
+  padding: 0.6rem;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  resize: vertical;
+  min-height: 70px;
+  margin-top: 0.5rem;
+}
+
+#sendBtn {
+  margin-top: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: var(--accent);
+  border: none;
+  color: #000;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.replyingBox {
+  background: #222831;
+  color: #fff;
+  padding: 0.4rem 0.8rem;
+  border-left: 4px solid var(--accent);
+  font-size: 0.85rem;
+  margin-bottom: 0.3rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.replyingBox span.closeReply {
+  cursor: pointer;
+  font-weight: bold;
+  margin-left: 0.5rem;
+}
+
+.message-bubble.highlight {
+  border: 2px solid var(--accent);
+  animation: highlightAnim 2s ease-out;
+}
+
+@keyframes highlightAnim {
+  0% { background-color: rgba(255,255,0,0.3); }
+  100% { background-color: inherit; }
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  margin-right: 0.5rem;
+}
+
+.message-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+</style>
+</head>
+
+<body>
+<header>
+  <h1>Admin Circle</h1>
+  <a href="dashboard.html">Tableau de bord</a>
+</header>
+
+<div id="pinnedMessageBox">Pinned: <span id="pinnedText"></span></div>
+
+<div id="conversationContainer">
+  <!-- Messages insérés ici par JS -->
+</div>
+
+<div class="replyingBox" id="replyBox" style="display:none;">
+  Replying to <span id="replyName"></span>: "<span id="replyPreview"></span>" <span class="closeReply" id="closeReply">✖</span>
+</div>
+
+<textarea id="messageInput" placeholder="Écrire un message..."></textarea>
+<button id="sendBtn">Envoyer</button>
+<script type="module">
+// 🔹 Imports Firebase
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.6.0/firebase-app.js";
+import { getFirestore, collection, doc, onSnapshot, addDoc, updateDoc, serverTimestamp, query, orderBy, getDoc } from "https://www.gstatic.com/firebasejs/10.6.0/firebase-firestore.js";
+import { getAuth } from "https://www.gstatic.com/firebasejs/10.6.0/firebase-auth.js";
+
+// 🔹 Config Firebase
+const firebaseConfig = {
+  apiKey: "AIzaSyBla3D7OS8-Hx82m8Tz6ZPIS7FSLury3ew",
+  authDomain: "cbc-business.firebaseapp.com",
+  projectId: "cbc-business",
+  storageBucket: "cbc-business.firebasestorage.app",
+  messagingSenderId: "295952883135",
+  appId: "1:295952883135:web:4624174a452c1f6aad950a",
+  measurementId: "G-580W4D6J7E"
+};
+
+// 🔹 Init Firebase
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+// 🔹 Variables globales
+let currentUser = null;
+let currentReply = null;
+
+// 🔹 Couleurs par rôle
+const roleColors = { master: "#ff3b3b", adminA: "#2ecc71", adminB: "#3498db" };
+
+// 🔹 DOM
+const convContainer = document.getElementById("conversationContainer");
+const messageInput = document.getElementById("messageInput");
+const sendBtn = document.getElementById("sendBtn");
+const replyBox = document.getElementById("replyBox");
+const replyName = document.getElementById("replyName");
+const replyPreview = document.getElementById("replyPreview");
+const closeReply = document.getElementById("closeReply");
+const pinnedBox = document.getElementById("pinnedMessageBox");
+const pinnedText = document.getElementById("pinnedText");
+
+// 🔹 Double sécurité
+async function isAdmin(uid) {
+  try {
+    const adminDoc = await getDoc(doc(db, "admins", uid));
+    if (adminDoc.exists()) {
+      const data = adminDoc.data();
+      return (["master","adminA","adminB"].includes(data.role)) && data.active === true;
+    }
+    return false;
+  } catch (err) {
+    console.error("Erreur vérif admin:", err);
+    return false;
+  }
+}
+
+// 🔹 Récupérer infos admin/user
+async function getAdminInfo(uid) {
+  const adminSnap = await getDoc(doc(db, "admins", uid));
+  if (adminSnap.exists()) return adminSnap.data();
+  const userSnap = await getDoc(doc(db, "users", uid));
+  return userSnap.exists() ? userSnap.data() : { name: "Admin", avatar: "" };
+}
+
+// 🔹 Afficher un message
+function displayMessage(msgData, msgID) {
+  const bubble = document.createElement("div");
+  bubble.classList.add("message-bubble");
+  bubble.id = msgID;
+  bubble.classList.add(msgData.senderID === currentUser.uid ? "right":"left");
+  bubble.style.backgroundColor = roleColors[msgData.senderRole] || "#555";
+  if (msgData.deleted) bubble.classList.add("deleted");
+
+  // header avatar + name
+  const header = document.createElement("div");
+  header.className = "message-header";
+  if (msgData.avatar) {
+    const avatar = document.createElement("img");
+    avatar.src = msgData.avatar; avatar.className="avatar"; header.appendChild(avatar);
+  }
+  const nameSpan = document.createElement("span");
+  nameSpan.textContent = msgData.senderName;
+  nameSpan.style.fontWeight = "bold";
+  header.appendChild(nameSpan);
+  bubble.appendChild(header);
+
+  // reply preview
+  if (msgData.replyTo) {
+    const replyDiv = document.createElement("div");
+    replyDiv.className = "replyPreview";
+    replyDiv.textContent = `${msgData.replyTo.senderName}: ${msgData.replyTo.textPreview}`;
+    replyDiv.addEventListener("click", () => highlightMessage(msgData.replyTo.messageID));
+    bubble.appendChild(replyDiv);
+  }
+
+  // message text
+  const msgText = document.createElement("div");
+  msgText.textContent = msgData.deleted ? "This message was deleted" : msgData.text;
+  bubble.appendChild(msgText);
+
+  // actions
+  const actions = document.createElement("div"); actions.className="actions";
+
+  // reply
+  const replyAction = document.createElement("span");
+  replyAction.textContent = "↩️"; replyAction.title="Reply";
+  replyAction.addEventListener("click", ()=> {
+    currentReply={messageID:msgID,senderName:msgData.senderName,textPreview:msgData.text.slice(0,80)};
+    replyName.textContent=currentReply.senderName;
+    replyPreview.textContent=currentReply.textPreview;
+    replyBox.style.display="flex";
+    messageInput.focus();
+  });
+  actions.appendChild(replyAction);
+
+  // delete
+  if(msgData.senderID===currentUser.uid||currentUser.role==="master"){
+    const delAction=document.createElement("span");
+    delAction.textContent="🗑️"; delAction.title="Delete";
+    delAction.addEventListener("click", async ()=>{
+      if(!(await isAdmin(currentUser.uid))) return;
+      await updateDoc(doc(db,"circle/global/messages",msgID),{text:"This message was deleted",deleted:true,deletedAt:serverTimestamp()});
+    });
+    actions.appendChild(delAction);
+  }
+
+  // pin (master)
+  if(currentUser.role==="master"){
+    const pinAction=document.createElement("span");
+    pinAction.textContent=msgData.isPinned?"📌":"📍";
+    pinAction.title=msgData.isPinned?"Unpin":"Pin";
+    pinAction.addEventListener("click",async ()=>{
+      if(!(await isAdmin(currentUser.uid))) return;
+      const circleRef=doc(db,"circle","global");
+      if(msgData.isPinned){
+        await updateDoc(circleRef,{pinnedMessageID:null,pinnedBy:null,pinnedAt:null});
+        await updateDoc(doc(db,"circle/global/messages",msgID),{isPinned:false});
+      }else{
+        await updateDoc(circleRef,{pinnedMessageID:msgID,pinnedBy:currentUser.uid,pinnedAt:serverTimestamp()});
+        await updateDoc(doc(db,"circle/global/messages",msgID),{isPinned:true});
+      }
+      highlightMessage(msgID,true); // highlight permanent
+    });
+    actions.appendChild(pinAction);
+  }
+
+  bubble.appendChild(actions);
+  convContainer.appendChild(bubble);
+}
+
+// 🔹 Highlight + scroll smart
+function highlightMessage(msgID, permanent=false){
+  const target=document.getElementById(msgID);
+  if(!target) return;
+  target.scrollIntoView({behavior:"smooth",block:"center"});
+  target.classList.add("highlight");
+  if(!permanent){
+    setTimeout(()=>target.classList.remove("highlight"),2000);
+  }
+}
+
+// 🔹 Auth
+auth.onAuthStateChanged(async user=>{
+  if(!user) return;
+  currentUser={uid:user.uid};
+  const info=await getAdminInfo(user.uid);
+  currentUser.role=info.role||"adminA";
+  currentUser.avatar=info.avatar||"";
+  currentUser.name=info.name||"Admin";
+});
+
+// 🔹 Messages temps réel
+const messagesCol=collection(db,"circle/global/messages");
+const q=query(messagesCol,orderBy("createdAt","asc"));
+onSnapshot(q,async snapshot=>{
+  convContainer.innerHTML="";
+  let pinned=null;
+  for(let docSnap of snapshot.docs){
+    const data=docSnap.data();
+    const adminInfo=await getAdminInfo(data.senderID);
+    data.senderName=adminInfo.name;
+    data.avatar=adminInfo.avatar||"";
+    displayMessage(data,docSnap.id);
+    if(data.isPinned) pinned={text:data.text,id:docSnap.id};
+  }
+
+  // pinned box
+  if(pinned){
+    pinnedText.textContent=pinned.text.slice(0,80);
+    pinnedBox.style.display="block";
+    pinnedBox.onclick=()=>highlightMessage(pinned.id,true);
+  }else pinnedBox.style.display="none";
+
+  // autoscroll si bas
+  const atBottom=convContainer.scrollTop+convContainer.clientHeight>=convContainer.scrollHeight-50;
+  if(atBottom) convContainer.scrollTop=convContainer.scrollHeight;
+});
+
+// 🔹 Send message
+sendBtn.addEventListener("click",async ()=>{
+  if(!messageInput.value.trim()) return;
+  if(!(await isAdmin(currentUser.uid))) return;
+  const msg={
+    text:messageInput.value,
+    senderID:currentUser.uid,
+    senderName:currentUser.name||"Admin",
+    senderRole:currentUser.role,
+    createdAt:serverTimestamp(),
+    deleted:false,
+    deletedAt:null,
+    edited:false,
+    replyTo:currentReply,
+    isPinned:false
+  };
+  await addDoc(messagesCol,msg);
+  messageInput.value="";
+  replyBox.style.display="none";
+  currentReply=null;
+});
+
+// 🔹 Close reply
+closeReply.addEventListener("click",()=>{replyBox.style.display="none";currentReply=null;});
+</script>
+</body>
+</html>

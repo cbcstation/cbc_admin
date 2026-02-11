@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Dashboard – CBC Business</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #111827;
+      --card: #1f2933;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --accent: #22c55e;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --info: #3b82f6;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    a { color: inherit; text-decoration: none; }
+
+    /* ===== HEADER ===== */
+    
+      header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem;
+    background: var(--panel);
+    color: white;
+    position: relative;
+  }
+
+  .hamburger {
+    font-size: 1.8rem;
+    cursor: pointer;
+  }
+
+  nav ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    background: #1565c0;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 200px;
+  }
+
+  nav ul li a {
+    display: block;
+    padding: 0.8rem 1rem;
+    color: white;
+    text-decoration: none;
+    border-bottom: 1px solid #0d47a1;
+  }
+
+  nav ul li a:hover {
+    background: #0b3d91;
+  }
+
+  .hidden {
+    display: none;
+  }
+
+    header h1 {
+      font-size: 1.2rem;
+      font-weight: 600;
+    }
+
+    .hamburger {
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+
+    /* ===== SIDEBAR (ADMIN NAV) ===== */
+    aside {
+      position: fixed;
+      top: 0;
+      left: -260px;
+      width: 260px;
+      height: 100vh;
+      background: #020617;
+      padding: 1rem;
+      transition: 0.3s;
+      z-index: 10;
+    }
+
+    aside h2 {
+      font-size: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    aside ul {
+      list-style: none;
+    }
+
+    aside li {
+      padding: 0.7rem 0;
+      border-bottom: 1px solid #1f2937;
+      color: var(--muted);
+    }
+
+    /* ===== MAIN ===== */
+    main {
+      padding: 1.2rem;
+    }
+
+    section {
+      margin-bottom: 2.5rem;
+    }
+
+    section h2 {
+      font-size: 1.1rem;
+      margin-bottom: 1rem;
+      border-left: 4px solid var(--accent);
+      padding-left: 0.6rem;
+    }
+
+    /* ===== CARDS ===== */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+    }
+
+    .card {
+      background: var(--card);
+      padding: 1rem;
+      border-radius: 6px;
+    }
+
+    .card span {
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .card strong {
+      font-size: 1.4rem;
+      display: block;
+      margin-top: 0.3rem;
+    }
+
+    /* ===== LISTS ===== */
+    .list {
+      background: var(--card);
+      border-radius: 6px;
+      padding: 1rem;
+    }
+
+    .list-item {
+      padding: 0.6rem 0;
+      border-bottom: 1px solid #374151;
+      font-size: 0.9rem;
+    }
+
+    .badge {
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      margin-left: 0.5rem;
+    }
+
+    .open { background: var(--info); }
+    .pending { background: var(--warning); }
+    .closed { background: var(--accent); }
+    .danger { background: var(--danger); }
+
+    /* ===== FOOTER ===== */
+    footer {
+      text-align: center;
+      padding: 1.5rem;
+      font-size: 0.8rem;
+      color: var(--muted);
+      border-top: 1px solid #1f2937;
+    }
+  </style>
+</head>
+
+<body>
+
+<!-- ===== HEADER ADMIN ===== -->
+<header>
+  <div class="hamburger">☰</div>
+  <h1>CBC Business – Admin Dashboard</h1>
+
+  <!-- Menu caché, s'affiche au clic sur hamburger -->
+  <nav id="admin-nav" class="hidden">
+    <ul>
+      <li><a href="dashboard.html">Tableau de bord</a></li>
+      <li><a href="circle.html">Cercle Admins</a></li>
+      <li><a href="super_admin.html">Management</a></li>
+      <li><a href="searchUser.html">Chercher un User</a></li>
+      <li><a href="tickets.html">Support Client</a></li>
+    </ul>
+  </nav>
+</header>
+
+<!-- ===== SIDEBAR ===== -->
+<aside>
+  <h2>Admin Navigation</h2>
+  <ul>
+    <li>Dashboard</li>
+    <li>Utilisateurs</li>
+    <li>Annonces</li>
+    <li>Vérifications</li>
+    <li>Support</li>
+    <li>Paiements</li>
+    <li>Commentaires</li>
+    <li>Alertes</li>
+    <li>Logs & Sécurité</li>
+  </ul>
+</aside>
+
+<!-- ===== MAIN CONTENT ===== -->
+<main>
+
+  <!-- 2️⃣ KPI -->
+  <section>
+    <h2>Vue globale – Statistiques</h2>
+    <div class="grid">
+      <div class="card"><span>Utilisateurs totaux</span><strong>—</strong></div>
+      <div class="card"><span>Utilisateurs actifs</span><strong>—</strong></div>
+      <div class="card"><span>Utilisateurs vérifiés</span><strong>—</strong></div>
+      <div class="card"><span>Annonces totales</span><strong>—</strong></div>
+      <div class="card"><span>Annonces actives</span><strong>—</strong></div>
+      <div class="card"><span>Annonces rendues</span><strong>—</strong></div>
+    </div>
+  </section>
+
+  <!-- 3️⃣ CROISSANCE -->
+  <section>
+    <h2>Activité & Croissance</h2>
+    <div class="grid">
+      <div class="card"><span>Nouveaux utilisateurs (jour)</span><strong>—</strong></div>
+      <div class="card"><span>Nouveaux utilisateurs (semaine)</span><strong>—</strong></div>
+      <div class="card"><span>Nouveaux utilisateurs (mois)</span><strong>—</strong></div>
+    </div>
+  </section>
+
+  <!-- 4️⃣ MODÉRATION -->
+  <section>
+    <h2>Modération & Validation</h2>
+
+    <div class="list">
+      <div class="list-item">
+        Comptes à vérifier
+        <span class="badge pending">users.verified = false</span>
+      </div>
+      <div class="list-item">
+        Demandes de vérification
+        <span class="badge pending">verification / pending</span>
+      </div>
+      <div class="list-item">
+        Commentaires à modérer
+        <span class="badge pending">comments / pending</span>
+      </div>
+      <div class="list-item">
+        Feedbacks utilisateurs
+        <span class="badge pending">feedbacks</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5️⃣ SUPPORT & ABUS -->
+  <section>
+    <h2>Support & Abus</h2>
+
+    <div class="grid">
+      <div class="card"><span>Tickets ouverts</span><strong>—</strong></div>
+      <div class="card"><span>Tickets en cours</span><strong>—</strong></div>
+      <div class="card"><span>Tickets fermés</span><strong>—</strong></div>
+      <div class="card"><span>Abuse reports</span><strong>—</strong></div>
+    </div>
+  </section>
+
+  <!-- 6️⃣ MONÉTISATION -->
+  <section>
+    <h2>Monétisation & Revenus</h2>
+
+    <div class="grid">
+      <div class="card"><span>Total paiements</span><strong>—</strong></div>
+      <div class="card"><span>Boosts actifs</span><strong>—</strong></div>
+      <div class="card"><span>Urgences actives</span><strong>—</strong></div>
+      <div class="card"><span>Copywriting en cours</span><strong>—</strong></div>
+    </div>
+  </section>
+
+  <!-- 7️⃣ ENGAGEMENT -->
+  <section>
+    <h2>Engagement & Performance</h2>
+    <div class="grid">
+      <div class="card"><span>Candidatures</span><strong>—</strong></div>
+      <div class="card"><span>Missions rendues</span><strong>—</strong></div>
+      <div class="card"><span>Messages envoyés</span><strong>—</strong></div>
+    </div>
+  </section>
+
+  <!-- 8️⃣ ALERTES -->
+  <section>
+    <h2>Alertes & Notifications</h2>
+    <div class="list">
+      <div class="list-item">
+        Alerte système active
+        <span class="badge danger">alerts.active</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 9️⃣ TECH -->
+  <section>
+    <h2>Données techniques</h2>
+    <div class="grid">
+      <div class="card"><span>Docs users</span><strong>—</strong></div>
+      <div class="card"><span>Docs annonces</span><strong>—</strong></div>
+      <div class="card"><span>Docs chats/messages</span><strong>—</strong></div>
+      <div class="card"><span>Charge Firestore</span><strong>—</strong></div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ===== FOOTER ===== -->
+<footer>
+  CBC Business – Admin Panel • Version 1.0 • © 2026
+</footer>
+<script>
+  const hamburger = document.querySelector('.hamburger');
+  const nav = document.getElementById('admin-nav');
+
+  hamburger.addEventListener('click', () => {
+    nav.classList.toggle('hidden');
+  });
+</script>
+<script type="module">
+/* =========================
+   IMPORTS FIREBASE
+========================= */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
+import {
+  getFirestore,
+  doc,
+  getDoc,
+  collection,
+  query,
+  where,
+  onSnapshot
+} from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+import {
+  getAuth,
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js";
+
+/* =========================
+   CONFIG FIREBASE
+========================= */
+const firebaseConfig = {
+  apiKey: "AIzaSyBla3D7OS8-Hx82m8Tz6ZPIS7FSLury3ew",
+  authDomain: "cbc-business.firebaseapp.com",
+  projectId: "cbc-business",
+  storageBucket: "cbc-business.firebasestorage.app",
+  messagingSenderId: "295952883135",
+  appId: "1:295952883135:web:4624174a452c1f6aad950a"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+/* =========================
+   VARIABLES GLOBALES
+========================= */
+let currentAdmin = null;
+let adminRole = null;
+
+/* =========================
+   SÉCURITÉ ADMIN
+========================= */
+onAuthStateChanged(auth, async (user) => {
+  if (!user) {
+    alert("Accès refusé.");
+    window.location.href = "/index.html";
+    return;
+  }
+
+  const uid = user.uid;
+
+  try {
+    /* 1️⃣ Vérifier USERS */
+    const userRef = doc(db, "users", uid);
+    const userSnap = await getDoc(userRef);
+
+    if (!userSnap.exists()) {
+      denyAccess("Utilisateur inconnu.");
+      return;
+    }
+
+    const userData = userSnap.data();
+
+    if (userData.role !== "admin") {
+      denyAccess("Vous n'êtes pas admin.");
+      return;
+    }
+
+    /* 2️⃣ Vérifier ADMINS */
+    const adminQuery = query(
+      collection(db, "admins"),
+      where("userID", "==", uid)
+    );
+
+    const adminSnap = await new Promise((resolve) => {
+      onSnapshot(adminQuery, (snap) => resolve(snap));
+    });
+
+    if (adminSnap.empty) {
+      denyAccess("Admin non enregistré.");
+      return;
+    }
+
+    const adminData = adminSnap.docs[0].data();
+    adminRole = adminData.role;
+
+    /* 3️⃣ Vérifier rôle autorisé */
+    const allowedRoles = ["adminA", "adminB", "master"];
+    if (!allowedRoles.includes(adminRole)) {
+      denyAccess("Rôle admin invalide.");
+      return;
+    }
+
+    /* ✅ ADMIN VALIDÉ */
+    currentAdmin = {
+      uid,
+      role: adminRole,
+      name: adminData.name
+    };
+
+    console.log("ADMIN CONNECTÉ :", currentAdmin);
+
+    /* 🚀 Lancer dashboard temps réel */
+    initDashboardRealtime();
+
+  } catch (err) {
+    console.error(err);
+    denyAccess("Erreur de sécurité.");
+  }
+});
+
+/* =========================
+   BLOQUER ACCÈS
+========================= */
+function denyAccess(message) {
+  alert(message);
+  window.location.href = "/index.html";
+}
+
+/* =========================
+   DASHBOARD – TEMPS RÉEL
+========================= */
+function initDashboardRealtime() {
+
+  /* ===== USERS ===== */
+  onSnapshot(collection(db, "users"), (snap) => {
+    const total = snap.size;
+    const active = snap.docs.filter(d => d.data().active).length;
+    const verified = snap.docs.filter(d => d.data().verified).length;
+
+    updateCard("Utilisateurs totaux", total);
+    updateCard("Utilisateurs actifs", active);
+    updateCard("Utilisateurs vérifiés", verified);
+  });
+
+  /* ===== ANNONCES ===== */
+  onSnapshot(collection(db, "annonces"), (snap) => {
+    const total = snap.size;
+    const actives = snap.docs.filter(d => d.data().etat === "actif").length;
+    const rendues = snap.docs.filter(d => d.data().etat === "rendu").length;
+
+    updateCard("Annonces totales", total);
+    updateCard("Annonces actives", actives);
+    updateCard("Annonces rendues", rendues);
+  });
+
+  /* ===== SUPPORT ===== */
+  onSnapshot(collection(db, "support"), (snap) => {
+    let open = 0, progress = 0, closed = 0, abuse = 0;
+
+    snap.docs.forEach(d => {
+      const t = d.data();
+      if (t.status === "open") open++;
+      if (t.status === "in_progress") progress++;
+      if (t.status === "closed") closed++;
+      if (t.abuseReports === true) abuse++;
+    });
+
+    updateCard("Tickets ouverts", open);
+    updateCard("Tickets en cours", progress);
+    updateCard("Tickets fermés", closed);
+    updateCard("Abuse reports", abuse);
+  });
+
+  /* ===== PAYMENTS ===== */
+  onSnapshot(collection(db, "payments"), (snap) => {
+    let total = 0;
+    snap.docs.forEach(d => total += d.data().amount || 0);
+    updateCard("Total paiements", total + " $");
+  });
+
+  /* ===== SERVICES ===== */
+  onSnapshot(
+    query(collection(db, "boosts"), where("active", "==", true)),
+    snap => updateCard("Boosts actifs", snap.size)
+  );
+
+  onSnapshot(collection(db, "urgences"), snap =>
+    updateCard("Urgences actives", snap.size)
+  );
+
+  onSnapshot(collection(db, "copywriting"), snap =>
+    updateCard("Copywriting en cours", snap.size)
+  );
+
+  /* ===== ENGAGEMENT ===== */
+  onSnapshot(collection(db, "commands"), snap =>
+    updateCard("Candidatures", snap.size)
+  );
+
+  onSnapshot(collection(db, "rendus"), snap =>
+    updateCard("Missions rendues", snap.size)
+  );
+
+  onSnapshot(collection(db, "chats"), snap =>
+    updateCard("Conversations", snap.size)
+  );
+}
+
+/* =========================
+   UPDATE UI (SIMPLE)
+========================= */
+function updateCard(label, value) {
+  document.querySelectorAll(".card").forEach(card => {
+    if (card.innerText.includes(label)) {
+      card.querySelector("strong").textContent = value;
+    }
+  });
+}
+</script>
+</body>
+</html>
